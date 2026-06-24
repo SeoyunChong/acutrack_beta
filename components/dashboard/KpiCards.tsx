@@ -1,9 +1,12 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp, Activity, Minus, Shield } from "lucide-react";
 import type { PatientSession } from "@/lib/types";
-import { calculateImprovement, calculateImprovementPercent, calculatePainReduction } from "@/lib/calculations";
+import { calculateImprovement, calculateImprovementPercent, calculatePainReduction, calculateBmi } from "@/lib/calculations";
 import type { MeasurementPhase } from "@/lib/measurement";
+import { PHASE_LABELS } from "@/lib/measurement";
 
 type Props = {
   session: PatientSession;
@@ -11,7 +14,23 @@ type Props = {
   measuredPreRom?: number;
   measuredPostRom?: number;
   liveAngle?: number;
+  progress?: number;
 };
+
+function useCountUp(target: number, duration = 800) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const step = target / (duration / 16);
+    const timer = setInterval(() => {
+      start += step;
+      if (start >= target) { setVal(target); clearInterval(timer); }
+      else setVal(Math.round(start));
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+  return val;
+}
 
 function KpiCard({ label, value, sub, accent, dim }: {
   label: string; value: string; sub: string; accent?: boolean; dim?: boolean;
@@ -29,36 +48,42 @@ function KpiCard({ label, value, sub, accent, dim }: {
   );
 }
 
-export default function KpiCards({ session, phase, measuredPreRom, measuredPostRom, liveAngle }: Props) {
-  const isMeasuring = phase === "measuring_pre" || phase === "measuring_post" || phase === "calibrating";
-  const hasPost = phase === "post_complete" || phase === "analysis_complete";
-  const hasPre = hasPost || phase === "pre_complete" || phase === "treatment_waiting";
+const fadeSlide = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+  exit: { opacity: 0, y: -8, transition: { duration: 0.2 } },
+};
 
-  const preRom = measuredPreRom ?? session.preRom;
-  const postRom = measuredPostRom ?? session.postRom;
-  const improvement = hasPost ? calculateImprovement(preRom, postRom) : undefined;
-  const improvementPct = hasPost ? calculateImprovementPercent(preRom, postRom) : undefined;
-  const painReduction = hasPost ? calculatePainReduction(session.prePainNrs, session.postPainNrs) : undefined;
+function ResultCards({ preRom, postRom, improvement, improvementPct, painReduction, session }: {
+  preRom: number;
+  postRom: number;
+  improvement: number | undefined;
+  improvementPct: number | undefined;
+  painReduction: number | undefined;
+  session: PatientSession;
+}) {
+  const animPreRom = useCountUp(preRom);
+  const animPostRom = useCountUp(postRom);
+  const animImprovement = useCountUp(improvement ?? 0);
+  const animImprovementPct = useCountUp(Math.round(improvementPct ?? 0));
 
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <motion.div key="results" {...fadeSlide} className="grid grid-cols-4 gap-3">
       <KpiCard
         label="치료 전 ROM"
-        value={hasPre ? `${preRom}°` : isMeasuring && phase === "measuring_pre" ? `${liveAngle ?? 0}°` : "--°"}
+        value={`${animPreRom}°`}
         sub={`NRS ${session.prePainNrs}점`}
-        dim={!hasPre && !isMeasuring}
       />
       <KpiCard
         label="치료 후 ROM"
-        value={hasPost ? `${postRom}°` : isMeasuring && phase === "measuring_post" ? `${liveAngle ?? 0}°` : "--°"}
+        value={`${animPostRom}°`}
         sub={`NRS ${session.postPainNrs}점`}
-        accent={hasPost}
-        dim={!hasPost && phase !== "measuring_post"}
+        accent
       />
       <KpiCard
         label="ROM 개선"
-        value={improvement !== undefined ? `+${improvement}°` : "--°"}
-        sub={improvementPct !== undefined ? `+${improvementPct.toFixed(1)}% 개선율` : "측정 완료 후 계산"}
+        value={improvement !== undefined ? `+${animImprovement}°` : "--°"}
+        sub={improvementPct !== undefined ? `+${animImprovementPct.toFixed ? animImprovementPct + ".0" : animImprovementPct}% 개선율` : "측정 완료 후 계산"}
         dim={improvement === undefined}
       />
       <KpiCard
@@ -67,6 +92,61 @@ export default function KpiCards({ session, phase, measuredPreRom, measuredPostR
         sub={`신뢰도 ${session.confidenceScore}%`}
         dim={painReduction === undefined}
       />
-    </div>
+    </motion.div>
+  );
+}
+
+export default function KpiCards({ session, phase, measuredPreRom, measuredPostRom, liveAngle, progress = 0 }: Props) {
+  const isReadyOrIdle = phase === "ready" || phase === "idle" as MeasurementPhase;
+  const isAnalysisComplete = phase === "analysis_complete";
+  const isDuringMeasurement = !isReadyOrIdle && !isAnalysisComplete;
+
+  const preRom = measuredPreRom ?? session.preRom;
+  const postRom = measuredPostRom ?? session.postRom;
+  const improvement = isAnalysisComplete ? calculateImprovement(preRom, postRom) : undefined;
+  const improvementPct = isAnalysisComplete ? calculateImprovementPercent(preRom, postRom) : undefined;
+  const painReduction = isAnalysisComplete ? calculatePainReduction(session.prePainNrs, session.postPainNrs) : undefined;
+  const bmi = calculateBmi(session.heightCm, session.weightKg);
+
+  return (
+    <AnimatePresence mode="wait">
+      {isReadyOrIdle && (
+        <motion.div key="info" {...fadeSlide} className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-white/8 bg-[#0f172a] p-3">
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">환자</p>
+            <p className="text-sm font-bold text-white">{session.patientName ?? session.id}</p>
+            <p className="text-xs text-slate-400">{session.age}세 · {session.sex} · BMI {bmi.toFixed(1)}</p>
+          </div>
+          <div className="rounded-xl border border-white/8 bg-[#0f172a] p-3">
+            <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">주소증</p>
+            <p className="text-sm text-slate-200 leading-relaxed line-clamp-2">{session.symptoms[0] ?? "—"}</p>
+          </div>
+        </motion.div>
+      )}
+
+      {isDuringMeasurement && (
+        <motion.div key="progress" {...fadeSlide} className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 px-4 py-2.5 flex items-center gap-3">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse flex-shrink-0" />
+          <span className="text-xs text-cyan-400 font-medium">{PHASE_LABELS[phase]}</span>
+          {(phase === "measuring_pre" || phase === "measuring_post") && (
+            <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full bg-cyan-500 rounded-full transition-all" style={{ width: `${progress * 100}%` }} />
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {isAnalysisComplete && (
+        <ResultCards
+          key="results-wrapper"
+          preRom={preRom}
+          postRom={postRom}
+          improvement={improvement}
+          improvementPct={improvementPct}
+          painReduction={painReduction}
+          session={session}
+        />
+      )}
+    </AnimatePresence>
   );
 }

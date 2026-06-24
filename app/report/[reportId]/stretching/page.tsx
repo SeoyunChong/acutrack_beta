@@ -2,9 +2,16 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { mockMeasurementSessions } from "@/lib/mock-data";
-import { WEAR_LOCATION_LABELS, MOTION_TYPE_LABELS_PATIENT } from "@/lib/types";
+import { WEAR_LOCATION_LABELS } from "@/lib/types";
+import type { WearLocation } from "@/lib/types";
 import { CheckCircle, Circle, ChevronLeft } from "lucide-react";
+
+const StaticJoint3D = dynamic(() => import("@/components/report/StaticJoint3D"), {
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-slate-100/5 rounded-lg animate-pulse" />,
+});
 
 type Params = Promise<{ reportId: string }>;
 
@@ -103,6 +110,16 @@ export default function StretchingPage({ params }: { params: Params }) {
                     }
                   </button>
                 </div>
+
+                {/* Illustration */}
+                {exercise.poseAngle != null && (
+                  <div className="w-full h-24 rounded-lg overflow-hidden bg-slate-800/30">
+                    <StaticJoint3D
+                      wearLocation={stretchingPlan.targetArea as WearLocation}
+                      poseAngle={exercise.poseAngle}
+                    />
+                  </div>
+                )}
 
                 {/* Info row */}
                 <div className="flex gap-3 mb-4">

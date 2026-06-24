@@ -85,6 +85,7 @@ export type MeasurementSession = {
 export type StretchingExercise = {
   id: string; title: string; targetArea: WearLocation; purpose: string;
   instructionSteps: string[]; holdSeconds: number; repetitions: number; cautions: string[];
+  poseAngle?: number;
 };
 export type StretchingPlan = {
   id: string; sessionId: string; targetArea: WearLocation; title: string;

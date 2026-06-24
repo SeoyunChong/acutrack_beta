@@ -18,6 +18,7 @@ import LiveDataPanel from "@/components/dashboard/LiveDataPanel";
 import CompactPatientSetup from "@/components/dashboard/CompactPatientSetup";
 import MeasurementControls from "@/components/dashboard/MeasurementControls";
 import KpiCards from "@/components/dashboard/KpiCards";
+import MeasurementResultModal from "@/components/dashboard/MeasurementResultModal";
 import LiveRomChart from "@/components/dashboard/LiveRomChart";
 import ClinicalSummary from "@/components/dashboard/ClinicalSummary";
 import SessionTable from "@/components/dashboard/SessionTable";
@@ -47,6 +48,7 @@ export default function DashboardPage() {
   const [postData, setPostData] = useState<RomPoint[]>([]);
   const [measuredPreRom, setMeasuredPreRom] = useState<number | undefined>();
   const [measuredPostRom, setMeasuredPostRom] = useState<number | undefined>();
+  const [showResultModal, setShowResultModal] = useState(false);
 
   // QR state
   const [QRCode, setQRCode] = useState<React.ComponentType<{ value: string; size: number }> | null>(null);
@@ -143,6 +145,7 @@ export default function DashboardPage() {
       });
       setPostData(pts);
       setPhase("analysis_complete");
+      setShowResultModal(true);
     });
   }, [selectedSession.postRom, runMeasurement]);
 
@@ -159,6 +162,7 @@ export default function DashboardPage() {
     setPostData([]);
     setMeasuredPreRom(undefined);
     setMeasuredPostRom(undefined);
+    setShowResultModal(false);
   }, []);
 
   const handleSelectPatient = useCallback(
@@ -227,11 +231,12 @@ export default function DashboardPage() {
             measuredPreRom={measuredPreRom}
             measuredPostRom={measuredPostRom}
             liveAngle={currentAngle}
+            progress={progress}
           />
 
           <div className="grid grid-cols-5 gap-4">
             {/* 3D View */}
-            <div className="col-span-2 rounded-2xl border bg-[#0f172a] border-white/8 p-3 flex flex-col gap-2">
+            <div className="relative col-span-3 rounded-2xl border bg-[#0f172a] border-white/8 p-3 flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <h3 className="text-xs font-semibold text-white">3D Joint View</h3>
                 {measuredPreRom && (
@@ -249,7 +254,7 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-              <div className="h-52">
+              <div className="h-80">
                 <Joint3DView
                   currentAngle={currentAngle}
                   preMaxAngle={measuredPreRom}
@@ -263,10 +268,19 @@ export default function DashboardPage() {
                 currentAngle={currentAngle}
                 progress={progress}
               />
+              {showResultModal && (
+                <MeasurementResultModal
+                  preRom={measuredPreRom}
+                  postRom={measuredPostRom}
+                  prePainNrs={selectedSession.prePainNrs}
+                  postPainNrs={selectedSession.postPainNrs}
+                  onClose={() => setShowResultModal(false)}
+                />
+              )}
             </div>
 
             {/* Live ROM Chart + Controls */}
-            <div className="col-span-3 flex flex-col gap-4">
+            <div className="col-span-2 flex flex-col gap-4">
               <LiveRomChart
                 preData={preData}
                 postData={postData}

@@ -12,6 +12,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 15, repetitions: 3,
       cautions: ["저림이나 날카로운 통증이 있으면 중단하세요.", "강하게 꺾지 말고 가볍게 당기세요."],
+      poseAngle: 35,
     },
     {
       id: "w2", title: "손목 신전근 스트레칭", targetArea: "wrist",
@@ -23,6 +24,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 15, repetitions: 3,
       cautions: ["무리하게 구부리지 마세요.", "통증이 심하면 즉시 중단하세요."],
+      poseAngle: 55,
     },
   ],
   elbow: [
@@ -36,6 +38,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 20, repetitions: 3,
       cautions: ["팔꿈치를 무리하게 펴지 마세요.", "저림 증상이 있으면 중단하세요."],
+      poseAngle: 90,
     },
     {
       id: "e2", title: "전완 회전 스트레칭", targetArea: "elbow",
@@ -47,6 +50,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 10, repetitions: 5,
       cautions: ["통증 없이 부드럽게 움직이세요.", "강제로 회전시키지 마세요."],
+      poseAngle: 130,
     },
   ],
   shoulder: [
@@ -60,6 +64,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 20, repetitions: 3,
       cautions: ["어깨를 올리지 않도록 주의하세요.", "날카로운 통증이 있으면 멈추세요."],
+      poseAngle: 60,
     },
     {
       id: "s2", title: "문틀 어깨 스트레칭", targetArea: "shoulder",
@@ -71,6 +76,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 20, repetitions: 3,
       cautions: ["어깨 충돌 증후군이 있으면 주의하세요.", "통증이 심해지면 즉시 중단하세요."],
+      poseAngle: 100,
     },
   ],
   neck: [
@@ -84,6 +90,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 15, repetitions: 3,
       cautions: ["머리를 뒤로 젖히지 마세요.", "어지럼증이 생기면 즉시 중단하세요."],
+      poseAngle: 30,
     },
     {
       id: "n2", title: "경추 회전 스트레칭", targetArea: "neck",
@@ -95,6 +102,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 10, repetitions: 5,
       cautions: ["급격히 돌리지 말고 천천히 움직이세요.", "저림이나 방사통이 있으면 중단하세요."],
+      poseAngle: 45,
     },
   ],
   lowerBack: [
@@ -108,6 +116,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 20, repetitions: 3,
       cautions: ["급격히 당기지 말고 부드럽게 진행하세요.", "허리에 날카로운 통증이 있으면 중단하세요."],
+      poseAngle: 40,
     },
     {
       id: "lb2", title: "고양이-소 스트레칭", targetArea: "lowerBack",
@@ -119,6 +128,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 5, repetitions: 10,
       cautions: ["동작을 천천히 조절하며 진행하세요.", "급성 요통 시에는 시행하지 마세요."],
+      poseAngle: 60,
     },
   ],
   knee: [
@@ -132,6 +142,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 20, repetitions: 3,
       cautions: ["무릎을 과도하게 구부리지 마세요.", "무릎 통증이 심해지면 중단하세요."],
+      poseAngle: 70,
     },
     {
       id: "k2", title: "햄스트링 스트레칭", targetArea: "knee",
@@ -143,6 +154,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 20, repetitions: 3,
       cautions: ["허리를 구부리지 말고 엉덩이 관절에서 구부리세요.", "저림이 생기면 중단하세요."],
+      poseAngle: 110,
     },
   ],
   ankle: [
@@ -156,6 +168,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 20, repetitions: 3,
       cautions: ["발뒤꿈치가 바닥에서 떨어지지 않도록 하세요.", "통증이 있으면 강도를 줄이세요."],
+      poseAngle: 20,
     },
     {
       id: "a2", title: "발목 원형 운동", targetArea: "ankle",
@@ -167,6 +180,7 @@ export const stretchingLibrary: Record<WearLocation, StretchingExercise[]> = {
       ],
       holdSeconds: 0, repetitions: 5,
       cautions: ["통증이 없는 범위에서만 움직이세요.", "부기가 있는 경우 의료진과 상담 후 시행하세요."],
+      poseAngle: 35,
     },
   ],
 };
