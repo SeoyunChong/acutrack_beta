@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Easing } from "framer-motion";
 import { TrendingUp, Activity, Minus, Shield } from "lucide-react";
 import type { PatientSession } from "@/lib/types";
 import { calculateImprovement, calculateImprovementPercent, calculatePainReduction, calculateBmi } from "@/lib/calculations";
@@ -48,9 +48,10 @@ function KpiCard({ label, value, sub, accent, dim }: {
   );
 }
 
+const EASE_OUT: Easing = "easeOut";
 const fadeSlide = {
   initial: { opacity: 0, y: 10 },
-  animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+  animate: { opacity: 1, y: 0, transition: { duration: 0.35, ease: EASE_OUT } },
   exit: { opacity: 0, y: -8, transition: { duration: 0.2 } },
 };
 
@@ -83,7 +84,7 @@ function ResultCards({ preRom, postRom, improvement, improvementPct, painReducti
       <KpiCard
         label="ROM 개선"
         value={improvement !== undefined ? `+${animImprovement}°` : "--°"}
-        sub={improvementPct !== undefined ? `+${animImprovementPct.toFixed ? animImprovementPct + ".0" : animImprovementPct}% 개선율` : "측정 완료 후 계산"}
+        sub={improvementPct !== undefined ? `+${animImprovementPct}% 개선율` : "측정 완료 후 계산"}
         dim={improvement === undefined}
       />
       <KpiCard

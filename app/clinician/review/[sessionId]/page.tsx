@@ -2,12 +2,18 @@
 
 import { use, useState } from "react";
 import { useRouter } from "next/navigation";
+import { motion, type Variants } from "framer-motion";
 import { mockMeasurementSessions } from "@/lib/mock-data";
 import { useStore } from "@/lib/store";
 import { WEAR_LOCATION_LABELS, MOTION_TYPE_LABELS, WEAR_LOCATION_LABELS_CLINICAL } from "@/lib/types";
 import JointRangeComparison from "@/components/report/JointRangeComparison";
 import ClinicianNav from "@/components/layout/ClinicianNav";
 import { CheckSquare, Square, ChevronLeft, CheckCircle, XCircle } from "lucide-react";
+
+const colVariants: Variants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.4, ease: "easeOut" } }),
+};
 
 type Params = Promise<{ sessionId: string }>;
 
@@ -89,7 +95,7 @@ export default function ReviewPage({ params }: { params: Params }) {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Left: measurement results */}
-          <div className="space-y-4">
+          <motion.div custom={0} variants={colVariants} initial="hidden" animate="visible" className="space-y-4">
             <div className="rounded-2xl border border-white/8 bg-[#0f172a] p-4">
               <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">측정 결과</h2>
 
@@ -126,10 +132,10 @@ export default function ReviewPage({ params }: { params: Params }) {
               <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">임상 소견</h2>
               <p className="text-xs text-slate-400 leading-relaxed">{session.clinicalSummary}</p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Center: patient report preview */}
-          <div className="space-y-4">
+          <motion.div custom={1} variants={colVariants} initial="hidden" animate="visible" className="space-y-4">
             <div className="rounded-2xl border border-white/8 bg-[#0f172a] p-4">
               <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">환자용 요약 (미리보기)</h2>
               <p className="text-xs text-slate-300 leading-relaxed">{session.patientSummary}</p>
@@ -146,10 +152,10 @@ export default function ReviewPage({ params }: { params: Params }) {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
 
           {/* Right: chart options + actions */}
-          <div className="space-y-4">
+          <motion.div custom={2} variants={colVariants} initial="hidden" animate="visible" className="space-y-4">
             <div className="rounded-2xl border border-white/8 bg-[#0f172a] p-4">
               <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">차트 포함 항목</h2>
 
@@ -203,7 +209,7 @@ export default function ReviewPage({ params }: { params: Params }) {
                 반영 거부
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>

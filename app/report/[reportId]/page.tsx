@@ -1,7 +1,8 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { motion, type Variants } from "framer-motion";
 import { mockMeasurementSessions } from "@/lib/mock-data";
 import { WEAR_LOCATION_LABELS, MOTION_TYPE_LABELS, MOTION_TYPE_LABELS_PATIENT } from "@/lib/types";
 import JointRangeComparison from "@/components/report/JointRangeComparison";
@@ -13,6 +14,29 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
+
+function useCountUp(target: number, duration = 900) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    let raf: number;
+    const startTime = performance.now();
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setVal(Math.round(eased * target));
+      if (progress < 1) raf = requestAnimationFrame(animate);
+    };
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [target, duration]);
+  return val;
+}
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 18 },
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.45, ease: "easeOut" } }),
+};
 
 type Params = Promise<{ reportId: string }>;
 
@@ -35,6 +59,13 @@ export default function ReportPage({ params }: { params: Params }) {
   const improvePct = ((improvement / session.preRom) * 100).toFixed(1);
   const painChange = session.prePainNrs - session.postPainNrs;
 
+  const animPreRom = useCountUp(session.preRom);
+  const animPostRom = useCountUp(session.postRom);
+  const animImprovement = useCountUp(improvement);
+  const animPrePain = useCountUp(session.prePainNrs);
+  const animPostPain = useCountUp(session.postPainNrs);
+  const animPainChange = useCountUp(painChange);
+
   // Combine pre/post curves for chart display
   const chartData = session.preCurve.map((pt, i) => ({
     time: pt.time,
@@ -55,17 +86,17 @@ export default function ReportPage({ params }: { params: Params }) {
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
         {/* Patient summary */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+        <motion.section custom={0} variants={fadeUp} initial="hidden" animate="visible" className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
           <p className="text-xs text-slate-400 mb-1">{new Date(session.measuredAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })}</p>
           <p className="text-sm font-semibold text-slate-700">{session.patientId} 님의 치료 기록</p>
           <h2 className="text-lg font-bold text-slate-800 mb-1">
             {WEAR_LOCATION_LABELS[session.wearLocation]} · {MOTION_TYPE_LABELS_PATIENT[session.motionType]}
           </h2>
           <p className="text-sm text-slate-600">{session.patientSummary}</p>
-        </section>
+        </motion.section>
 
         {/* ROM comparison gauge */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col items-center">
+        <motion.section custom={1} variants={fadeUp} initial="hidden" animate="visible" className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col items-center">
           <h3 className="text-sm font-semibold text-slate-700 mb-3 self-start">움직임 범위 변화</h3>
           <JointRangeComparison
             preRom={session.preRom}
@@ -77,38 +108,38 @@ export default function ReportPage({ params }: { params: Params }) {
           <div className="grid grid-cols-2 gap-3 w-full mt-4">
             <div className="rounded-xl bg-slate-50 border border-slate-100 p-3 text-center">
               <p className="text-[10px] text-slate-400 mb-1">치료 전</p>
-              <p className="text-2xl font-bold text-slate-600 font-mono">{session.preRom}°</p>
+              <p className="text-2xl font-bold text-slate-600 font-mono">{animPreRom}°</p>
             </div>
             <div className="rounded-xl bg-cyan-50 border border-cyan-100 p-3 text-center">
               <p className="text-[10px] text-cyan-500 mb-1">치료 후</p>
-              <p className="text-2xl font-bold text-cyan-600 font-mono">{session.postRom}°</p>
+              <p className="text-2xl font-bold text-cyan-600 font-mono">{animPostRom}°</p>
             </div>
           </div>
-          <p className="mt-2 text-sm font-bold text-emerald-600">+{improvement}° 향상 ({improvePct}%)</p>
-        </section>
+          <p className="mt-2 text-sm font-bold text-emerald-600">+{animImprovement}° 향상 ({improvePct}%)</p>
+        </motion.section>
 
         {/* Pain change */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+        <motion.section custom={2} variants={fadeUp} initial="hidden" animate="visible" className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
           <h3 className="text-sm font-semibold text-slate-700 mb-3">통증 변화</h3>
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-red-50 border border-red-100 p-3 text-center">
               <p className="text-[10px] text-red-400 mb-1">치료 전 통증</p>
-              <p className="text-2xl font-bold text-red-500 font-mono">{session.prePainNrs}점</p>
+              <p className="text-2xl font-bold text-red-500 font-mono">{animPrePain}점</p>
               <p className="text-[10px] text-slate-400">NRS 0-10</p>
             </div>
             <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3 text-center">
               <p className="text-[10px] text-emerald-500 mb-1">치료 후 통증</p>
-              <p className="text-2xl font-bold text-emerald-600 font-mono">{session.postPainNrs}점</p>
+              <p className="text-2xl font-bold text-emerald-600 font-mono">{animPostPain}점</p>
               <p className="text-[10px] text-slate-400">NRS 0-10</p>
             </div>
           </div>
           <p className="mt-2 text-sm text-center text-emerald-600 font-semibold">
-            통증 {painChange}점 감소
+            통증 {animPainChange}점 감소
           </p>
-        </section>
+        </motion.section>
 
         {/* Movement curve chart */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+        <motion.section custom={3} variants={fadeUp} initial="hidden" animate="visible" className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
           <h3 className="text-sm font-semibold text-slate-700 mb-3">움직임 곡선</h3>
           <ResponsiveContainer width="100%" height={140}>
             <AreaChart data={chartData}>
@@ -140,15 +171,17 @@ export default function ReportPage({ params }: { params: Params }) {
               <span className="w-4 h-0.5 bg-cyan-400 inline-block" /> 치료 후
             </span>
           </div>
-        </section>
+        </motion.section>
 
         {/* CTA */}
+        <motion.div custom={4} variants={fadeUp} initial="hidden" animate="visible">
         <Link
           href={`/report/${reportId}/stretching`}
           className="block w-full text-center py-3.5 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-white font-bold text-sm transition-all shadow-md"
         >
           오늘의 홈 스트레칭 보기 →
         </Link>
+        </motion.div>
 
         {/* Disclaimer */}
         <p className="text-xs text-slate-500 text-center leading-relaxed px-2">
