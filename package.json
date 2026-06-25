@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "gen:gifs": "node scripts/generate-exercise-gifs.mjs"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.3.1",
@@ -32,6 +33,8 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "gif-encoder-2": "^1.0.5",
+    "pureimage": "^0.4.18",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

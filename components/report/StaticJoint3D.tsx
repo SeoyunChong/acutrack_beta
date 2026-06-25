@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
+import { useMemo, useRef } from "react";
+import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { WearLocation } from "@/lib/types";
 import { JOINT_CONFIGS } from "@/lib/joint-config";
@@ -186,17 +186,23 @@ function BodyPartMesh({ type, color }: { type: BodyPartType; color: string }) {
   }
 }
 
-// ─── StaticScene ──────────────────────────────────────────────────────────────
+// ─── AnimatedScene ────────────────────────────────────────────────────────────
 
-function StaticScene({ wearLocation, poseAngle }: Props) {
+function AnimatedScene({ wearLocation, poseAngle }: Props) {
   const cfg = JOINT_CONFIGS[wearLocation];
-  const angleRad = poseAngle * (Math.PI / 180);
+  const groupRef = useRef<THREE.Group>(null);
+  const tRef = useRef(0);
+  const maxRad = poseAngle * (Math.PI / 180);
 
-  const movingRotation: [number, number, number] = [
-    cfg.rotationAxis === "x" ? angleRad : 0,
-    cfg.rotationAxis === "y" ? angleRad : 0,
-    cfg.rotationAxis === "z" ? angleRad : 0,
-  ];
+  useFrame((_, delta) => {
+    tRef.current += delta * 0.6;
+    const t = (Math.sin(tRef.current * Math.PI - Math.PI / 2) + 1) / 2; // 0→1→0
+    const angle = t * maxRad;
+    if (!groupRef.current) return;
+    groupRef.current.rotation.x = cfg.rotationAxis === "x" ? angle : 0;
+    groupRef.current.rotation.y = cfg.rotationAxis === "y" ? angle : 0;
+    groupRef.current.rotation.z = cfg.rotationAxis === "z" ? angle : 0;
+  });
 
   return (
     <>
@@ -205,19 +211,16 @@ function StaticScene({ wearLocation, poseAngle }: Props) {
       <directionalLight position={[-1, 1, -2]} intensity={0.3} color="#aaccff" />
 
       <group position={cfg.pivot.position}>
-        {/* Fixed segment */}
         <group position={cfg.fixed.position}>
           <BodyPartMesh type={cfg.fixed.bodyPart} color="#a0b4c0" />
         </group>
 
-        {/* Joint pivot — small sphere */}
         <mesh>
           <sphereGeometry args={[cfg.pivot.radius * 0.8, 12, 12]} />
           <meshStandardMaterial color="#00A3A8" roughness={0.3} metalness={0.5} />
         </mesh>
 
-        {/* Moving segment at pose angle */}
-        <group rotation={movingRotation}>
+        <group ref={groupRef}>
           <group position={cfg.moving.position}>
             <BodyPartMesh type={cfg.moving.bodyPart} color="#c8dce8" />
           </group>
@@ -240,7 +243,7 @@ export default function StaticJoint3D({ wearLocation, poseAngle }: Props) {
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
       >
-        <StaticScene wearLocation={wearLocation} poseAngle={poseAngle} />
+        <AnimatedScene wearLocation={wearLocation} poseAngle={poseAngle} />
       </Canvas>
     </div>
   );

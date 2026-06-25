@@ -2,16 +2,10 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
+import Image from "next/image";
 import { mockMeasurementSessions } from "@/lib/mock-data";
 import { WEAR_LOCATION_LABELS } from "@/lib/types";
-import type { WearLocation } from "@/lib/types";
-import { CheckCircle, Circle, ChevronLeft } from "lucide-react";
-
-const StaticJoint3D = dynamic(() => import("@/components/report/StaticJoint3D"), {
-  ssr: false,
-  loading: () => <div className="w-full h-full bg-slate-100/5 rounded-lg animate-pulse" />,
-});
+import { CheckCircle, Circle, ChevronLeft, Clock, RefreshCw } from "lucide-react";
 
 type Params = Promise<{ reportId: string }>;
 
@@ -50,114 +44,146 @@ export default function StretchingPage({ params }: { params: Params }) {
   }
 
   const { stretchingPlan } = session;
-
-
-  const allDone = stretchingPlan.exercises.length > 0 &&
-    stretchingPlan.exercises.every((ex) => completed.has(ex.id));
+  const total = stretchingPlan.exercises.length;
+  const doneCount = completed.size;
+  const allDone = total > 0 && doneCount === total;
+  const progressPct = total > 0 ? (doneCount / total) * 100 : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-100 px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <Link href={`/report/${reportId}`} className="p-1.5 rounded-lg hover:bg-slate-100 transition-all">
+      {/* ── Sticky header ────────────────────────────────────────────────── */}
+      <header className="bg-white border-b border-slate-100 px-3 py-2.5 flex items-center gap-2 sticky top-0 z-10">
+        <Link
+          href={`/report/${reportId}`}
+          className="p-2.5 rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-all -ml-1"
+          aria-label="뒤로"
+        >
           <ChevronLeft className="w-5 h-5 text-slate-500" />
         </Link>
-        <div>
-          <p className="text-xs text-slate-400">AcuTrack · 홈 스트레칭</p>
-          <h1 className="text-sm font-bold text-slate-700">{stretchingPlan.title}</h1>
+        <div className="flex-1 min-w-0">
+          <p className="text-[11px] text-slate-400 leading-none mb-0.5">AcuTrack · 홈 스트레칭</p>
+          <h1 className="text-sm font-bold text-slate-700 truncate">{stretchingPlan.title}</h1>
         </div>
+        <span className="shrink-0 text-xs font-semibold text-slate-400 tabular-nums">
+          {doneCount}/{total}
+        </span>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6 space-y-4">
-        {/* Plan header */}
-        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
+      {/* ── Main scroll area (pb for sticky bottom bar) ───────────────────── */}
+      <main className="max-w-lg mx-auto px-4 pt-5 pb-28 space-y-4">
+
+        {/* Plan summary card */}
+        <section className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4">
           <div className="flex items-center gap-2 mb-2">
-            <span className="px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-600 text-[10px] font-semibold">
+            <span className="px-2.5 py-1 rounded-full bg-cyan-100 text-cyan-600 text-xs font-semibold">
               {WEAR_LOCATION_LABELS[stretchingPlan.targetArea]}
             </span>
-            <span className="text-xs text-slate-400">{stretchingPlan.exercises.length}가지 운동</span>
+            <span className="text-xs text-slate-400">{total}가지 운동</span>
           </div>
-          <p className="text-sm text-slate-600">{stretchingPlan.description}</p>
+          <p className="text-sm text-slate-600 leading-relaxed">{stretchingPlan.description}</p>
         </section>
 
-        {/* Exercises */}
+        {/* Exercise cards */}
         {stretchingPlan.exercises.map((exercise, idx) => {
           const done = completed.has(exercise.id);
           return (
-            <div
+            <article
               key={exercise.id}
-              className={`bg-white rounded-2xl shadow-sm border transition-all ${done ? "border-emerald-200" : "border-slate-100"}`}
+              className={`bg-white rounded-2xl shadow-sm border transition-all duration-300 ${
+                done ? "border-emerald-200 bg-emerald-50/30" : "border-slate-100"
+              }`}
             >
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="w-5 h-5 rounded-full bg-cyan-100 text-cyan-600 text-[10px] font-bold flex items-center justify-center shrink-0">
-                        {idx + 1}
-                      </span>
-                      <h3 className="text-sm font-bold text-slate-700">{exercise.title}</h3>
-                    </div>
-                    <p className="text-[11px] text-slate-500">{exercise.purpose}</p>
-                  </div>
-                  <button
-                    onClick={() => toggleCompleted(exercise.id)}
-                    className="shrink-0 mt-0.5"
-                    aria-label={done ? "완료 취소" : "완료 표시"}
-                  >
-                    {done
-                      ? <CheckCircle className="w-7 h-7 text-emerald-500" />
-                      : <Circle className="w-7 h-7 text-slate-300" />
-                    }
-                  </button>
+              {/* Card header */}
+              <div className="px-4 pt-4 pb-3 flex items-start gap-3">
+                <span className="shrink-0 w-6 h-6 rounded-full bg-cyan-100 text-cyan-600 text-xs font-bold flex items-center justify-center mt-0.5">
+                  {idx + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-slate-700 leading-snug">{exercise.title}</h3>
+                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{exercise.purpose}</p>
                 </div>
-
-                {/* Illustration */}
-                {exercise.poseAngle != null && (
-                  <div className="w-full h-24 rounded-lg overflow-hidden bg-slate-800/30">
-                    <StaticJoint3D
-                      wearLocation={stretchingPlan.targetArea as WearLocation}
-                      poseAngle={exercise.poseAngle}
-                    />
-                  </div>
-                )}
-
-                {/* Info row */}
-                <div className="flex gap-3 mb-4">
-                  {exercise.holdSeconds > 0 && (
-                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-medium">
-                      {exercise.holdSeconds}초 유지
-                    </span>
-                  )}
-                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-medium">
-                    {exercise.repetitions}회 반복
-                  </span>
-                </div>
-
-                {/* Steps */}
-                <div className="space-y-2">
-                  {exercise.instructionSteps.map((step, stepIdx) => (
-                    <div key={stepIdx} className="flex gap-2.5">
-                      <span className="shrink-0 w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-500 text-[10px] font-bold flex items-center justify-center mt-0.5">
-                        {stepIdx + 1}
-                      </span>
-                      <p className="text-[12px] text-slate-600 leading-relaxed">{step}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Cautions */}
-                {exercise.cautions.length > 0 && (
-                  <div className="mt-3 bg-amber-50 border border-amber-100 rounded-xl p-3">
-                    <p className="text-[10px] font-semibold text-amber-600 mb-1">주의사항</p>
-                    <ul className="space-y-0.5">
-                      {exercise.cautions.map((c, i) => (
-                        <li key={i} className="text-[11px] text-amber-700">· {c}</li>
-                      ))}
-                    </ul>
-                  </div>
+                {done && (
+                  <CheckCircle className="shrink-0 w-5 h-5 text-emerald-500 mt-0.5" />
                 )}
               </div>
-            </div>
+
+              {/* GIF illustration — full width, responsive */}
+              {exercise.poseAngle != null && (
+                <div className="mx-4 rounded-xl overflow-hidden bg-[#07111f] flex justify-center mb-3">
+                  <Image
+                    src={`/gifs/${exercise.id}.gif`}
+                    alt={`${exercise.title} 동작 예시`}
+                    width={240}
+                    height={240}
+                    unoptimized
+                    className="w-48 h-48"
+                  />
+                </div>
+              )}
+
+              {/* Info badges */}
+              <div className="px-4 flex gap-2 mb-3 flex-wrap">
+                {exercise.holdSeconds > 0 && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+                    <Clock className="w-3 h-3" />
+                    {exercise.holdSeconds}초 유지
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+                  <RefreshCw className="w-3 h-3" />
+                  {exercise.repetitions}회 반복
+                </span>
+              </div>
+
+              {/* Instruction steps */}
+              <div className="px-4 space-y-2.5 mb-3">
+                {exercise.instructionSteps.map((step, stepIdx) => (
+                  <div key={stepIdx} className="flex gap-3">
+                    <span className="shrink-0 w-5 h-5 rounded-full bg-cyan-500/10 text-cyan-500 text-[11px] font-bold flex items-center justify-center mt-0.5">
+                      {stepIdx + 1}
+                    </span>
+                    <p className="text-xs text-slate-600 leading-relaxed">{step}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Cautions */}
+              {exercise.cautions.length > 0 && (
+                <div className="mx-4 mb-3 bg-amber-50 border border-amber-100 rounded-xl p-3">
+                  <p className="text-[11px] font-semibold text-amber-600 mb-1.5">⚠ 주의사항</p>
+                  <ul className="space-y-1">
+                    {exercise.cautions.map((c, i) => (
+                      <li key={i} className="text-xs text-amber-700 leading-snug">· {c}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Full-width done toggle button */}
+              <div className="px-4 pb-4">
+                <button
+                  onClick={() => toggleCompleted(exercise.id)}
+                  className={`w-full py-3 rounded-xl text-sm font-semibold transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${
+                    done
+                      ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                      : "bg-cyan-500 text-white hover:bg-cyan-400 shadow-sm shadow-cyan-200"
+                  }`}
+                  aria-label={done ? "완료 취소" : "완료 표시"}
+                >
+                  {done ? (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      완료했어요
+                    </>
+                  ) : (
+                    <>
+                      <Circle className="w-4 h-4" />
+                      완료 표시하기
+                    </>
+                  )}
+                </button>
+              </div>
+            </article>
           );
         })}
 
@@ -165,41 +191,51 @@ export default function StretchingPage({ params }: { params: Params }) {
         {stretchingPlan.generalCautions.length > 0 && (
           <section className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
             <p className="text-xs font-semibold text-amber-600 mb-2">전체 주의사항</p>
-            <ul className="space-y-1">
+            <ul className="space-y-1.5">
               {stretchingPlan.generalCautions.map((c, i) => (
-                <li key={i} className="text-[11px] text-amber-700">· {c}</li>
+                <li key={i} className="text-xs text-amber-700 leading-snug">· {c}</li>
               ))}
             </ul>
           </section>
         )}
 
-        {/* Completion banner */}
+        {/* All done banner */}
         {allDone && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 text-center">
-            <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-            <p className="text-sm font-bold text-emerald-700">모든 운동 완료!</p>
-            <p className="text-xs text-emerald-600 mt-1">수고하셨습니다. 꾸준히 운동하시면 더 빨리 회복할 수 있습니다.</p>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center">
+            <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
+            <p className="text-base font-bold text-emerald-700 mb-1">모든 운동 완료!</p>
+            <p className="text-xs text-emerald-600 leading-relaxed">
+              수고하셨습니다. 꾸준히 운동하시면 더 빨리 회복할 수 있습니다.
+            </p>
           </div>
         )}
 
-        {/* Progress */}
-        <div className="bg-white rounded-xl border border-slate-100 p-3 flex items-center gap-3">
-          <div className="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
-            <div
-              className="h-full rounded-full bg-emerald-400 transition-all duration-500"
-              style={{ width: `${(completed.size / stretchingPlan.exercises.length) * 100}%` }}
-            />
-          </div>
-          <span className="text-xs font-semibold text-slate-500">
-            {completed.size}/{stretchingPlan.exercises.length} 완료
-          </span>
-        </div>
-
         {/* Disclaimer */}
-        <p className="text-[10px] text-slate-400 text-center leading-relaxed px-2">
-          본 리포트는 치료 전후 움직임 변화 확인용 참고 자료이며, 진단 확정 또는 치료 효과 보장을 의미하지 않습니다. 모든 의료적 판단은 담당 임상 전문가의 지도 하에 이루어져야 합니다.
+        <p className="text-[11px] text-slate-400 text-center leading-relaxed px-2 pb-2">
+          본 리포트는 치료 전후 움직임 변화 확인용 참고 자료이며, 진단 확정 또는 치료 효과 보장을 의미하지 않습니다.
+          모든 의료적 판단은 담당 임상 전문가의 지도 하에 이루어져야 합니다.
         </p>
       </main>
+
+      {/* ── Sticky bottom progress bar ────────────────────────────────────── */}
+      <div className="fixed bottom-0 left-0 right-0 z-20 bg-white/90 backdrop-blur-sm border-t border-slate-100 px-4 py-3 safe-area-pb">
+        <div className="max-w-lg mx-auto flex items-center gap-3">
+          <div className="flex-1 h-2.5 rounded-full bg-slate-100 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-emerald-400 transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+          <span className="shrink-0 text-xs font-bold text-slate-500 tabular-nums w-14 text-right">
+            {doneCount}/{total} 완료
+          </span>
+        </div>
+        {allDone && (
+          <p className="text-center text-[11px] text-emerald-600 font-semibold mt-1.5">
+            오늘 스트레칭 완료 🎉
+          </p>
+        )}
+      </div>
     </div>
   );
 }
